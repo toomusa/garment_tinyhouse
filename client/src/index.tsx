@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useMutation } from "@apollo/react-hooks";
-import { Home, Host, Listing, Listings, NotFound, User, Login, AppHeader } from "./sections";
+import { Home, Listing, Listings, NotFound, User, Login, AppHeader, Stripe, Host } from "./sections";
 import { AppHeaderSkeleton, ErrorBanner } from "./lib/components";
 import { Viewer } from "./lib/types";
 import { LOG_IN } from "./lib/graphql/mutations";
@@ -78,11 +78,12 @@ const App = () => {
         </div>
         <Switch>
           <Route exact path="/" component={Home} />
-          <Route exact path="/host" component={Host} />
+          <Route exact path="/host" render={(props) => <Host {...props} viewer={viewer} />} />
           <Route exact path="/listing/:id" component={Listing} />
           <Route exact path="/listings/:location?" component={Listings} />
+          <Route exact path="/stripe" render={(props) => <Stripe {...props} viewer={viewer} setViewer={setViewer} />} />
           <Route exact path="/login" render={(props) => <Login {...props} setViewer={setViewer} />} />
-          <Route exact path="/user/:id" render={(props) => <User {...props} viewer={viewer} />} />
+          <Route exact path="/user/:id" render={(props) => <User {...props} viewer={viewer} setViewer={setViewer} />} />
           <Route component={NotFound} />
         </Switch>
       </Layout>

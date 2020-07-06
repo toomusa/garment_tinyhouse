@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { IResolvers } from "apollo-server-express";
-import { UserArgs, UserBookingArgs, UserBookingsData, UserListingArgs, UserListingsData } from "./types";
+import { UserArgs, UserBookingArgs, UserBookingsData, UserListingsArgs, UserListingsData } from "./types";
 import { Database, User } from "../../../lib/types";
 import { authorize } from "../../../lib/utils";
 
@@ -57,7 +57,7 @@ export const userResolvers: IResolvers = {
           _id: { $in: user.bookings }
         });
 
-        cursor.skip(page > 0 ? (page - 1) + limit : 0);
+        cursor = cursor.skip(page > 0 ? (page - 1) * limit : 0);
         cursor = cursor.limit(limit);
 
         data.total = await cursor.count();
@@ -70,7 +70,7 @@ export const userResolvers: IResolvers = {
     },
     listings: async (
       user: User,
-      { limit, page }: UserListingArgs,
+      { limit, page }: UserListingsArgs,
       { db }: { db: Database }
     ):Promise<UserListingsData | null> => {
       try {
@@ -83,7 +83,7 @@ export const userResolvers: IResolvers = {
           _id: { $in: user.listings }
         });
 
-        cursor.skip(page > 0 ? (page - 1) + limit : 0);
+        cursor = cursor.skip(page > 0 ? (page - 1) * limit : 0);
         cursor = cursor.limit(limit);
 
         data.total = await cursor.count();

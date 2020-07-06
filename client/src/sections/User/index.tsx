@@ -10,6 +10,7 @@ import { UserBookings, UserListings, UserProfile } from "./components";
 
 interface Props {
   viewer: Viewer;
+  setViewer: (viewer: Viewer) => void;
 }
 
 interface MatchParams {
@@ -19,11 +20,11 @@ interface MatchParams {
 const { Content } = Layout;
 const PAGE_LIMIT = 4;
 
-export const User = ({ viewer, match }: Props & RouteComponentProps<MatchParams>) => {
+export const User = ({ viewer, match, setViewer }: Props & RouteComponentProps<MatchParams>) => {
   const [listingsPage, setListingsPage] = useState(1);
   const [bookingsPage, setBookingsPage] = useState(1);
 
-  const { data, loading, error } = useQuery<UserData, UserVariables>(USER, {
+  const { data, loading, error, refetch } = useQuery<UserData, UserVariables>(USER, {
     variables: {
       id: match.params.id,
       bookingsPage,
@@ -31,6 +32,15 @@ export const User = ({ viewer, match }: Props & RouteComponentProps<MatchParams>
       limit: PAGE_LIMIT
     }
   });
+
+  const handleUserRefetch = async () => {
+    await refetch();
+  }
+
+  const stripeError = new URL(window.location.href).searchParams.get("stripe_error");
+  const stripeErrorBanner = stripeError ? (
+    <ErrorBanner description="We had an issue connecting with Stripe. Please try again soon." />
+  ) : null;
 
   if (loading) {
     return (
@@ -56,7 +66,13 @@ export const User = ({ viewer, match }: Props & RouteComponentProps<MatchParams>
   const userBookings = user ? user.bookings : null;
 
   const userProfileElement = user ? (
-    <UserProfile user={user} viewerIsUser={viewerIsUser} />
+    <UserProfile 
+      user={user} 
+      viewer={viewer} 
+      setViewer={setViewer} 
+      viewerIsUser={viewerIsUser} 
+      handleUserRefetch={handleUserRefetch}
+    />
   ) : null;
 
   const userListingsElement = userListings ? (
@@ -79,6 +95,7 @@ export const User = ({ viewer, match }: Props & RouteComponentProps<MatchParams>
 
   return (
     <Content className="user">
+      {stripeErrorBanner}
       <Row gutter={12} justify="space-between">
         <Col xs={24}>{userProfileElement}</Col>
         <Col xs={24}>

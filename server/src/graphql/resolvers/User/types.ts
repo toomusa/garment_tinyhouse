@@ -14,7 +14,7 @@ export interface UserBookingsData {
   result: Booking[];
 }
 
-export interface UserListingArgs {
+export interface UserListingsArgs {
   limit: number;
   page: number;
 }
