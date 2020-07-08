@@ -33,6 +33,10 @@ export interface Booking {
   checkOut: string;
 }
 
+export interface ChargeBooking {
+  secret: string;
+}
+
 export interface Listing {
   _id: ObjectId;
   title: string;

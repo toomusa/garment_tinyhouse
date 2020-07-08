@@ -44,7 +44,6 @@ const logInViaGoogle = async (
   if (!userId || !userName || !userAvatar || !userEmail) {
     throw new Error("Google login error");
   }
-  console.log(userId, userName, userAvatar, userEmail);
 
   const updateRes = await db.users.findOneAndUpdate(
     { _id: userId },
@@ -60,7 +59,6 @@ const logInViaGoogle = async (
   )
 
   let viewer = updateRes.value;
-  console.log(viewer);
 
   if (!viewer) {
     const insertResult = await db.users.insertOne({
@@ -77,7 +75,6 @@ const logInViaGoogle = async (
     viewer = insertResult.ops[0];
   }
 
-  console.log(userId)
   res.cookie("viewer", userId, {
     ...cookieOptions,
     maxAge: 365 * 24 * 60 * 60 * 1000
@@ -203,8 +200,13 @@ export const viewerResolvers: IResolvers = {
     ): Promise<Viewer> => {
       try {
         let viewer = await authorize(db, req);
-        if (!viewer) {
+        if (!viewer || !viewer.walletId) {
           throw new Error("Viewer cannot be found");
+        }
+
+        const wallet = await Stripe.disconnect(viewer.walletId);
+        if (!wallet) {
+          throw new Error("Stripe disconnect error.")
         }
 
         const updateRes = await db.users.findOneAndUpdate(

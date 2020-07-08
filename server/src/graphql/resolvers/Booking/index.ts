@@ -1,10 +1,10 @@
 import { IResolvers } from "apollo-server-express";
 import { Request } from "express";
 import { Stripe } from "../../../lib/api";
-import { Database, Listing, Booking, BookingsIndex, User } from "../../../lib/types";
+import { Database, Listing, Booking, BookingsIndex, ChargeBooking } from "../../../lib/types";
 import { authorize } from "../../../lib/utils";
 import { ObjectId } from "mongodb";
-import { CreateBookingInput, CreateBookingArgs } from "./types";
+import { CreateBookingArgs, GetSecretArgs } from "./types";
 
 const resolveBookingsIndex = (
   bookingsIndex: BookingsIndex,
@@ -42,15 +42,13 @@ const resolveBookingsIndex = (
 
 export const bookingResolvers: IResolvers = {
   Mutation: {
-    createBooking: async (
+    clientSecret: async (
       _root: undefined,
-      { input }: CreateBookingArgs,
+      { input }: GetSecretArgs,
       { db, req }: { db: Database, req: Request }
-    ): Promise<Booking> => {
+    ): Promise<ChargeBooking> => {
       try {
-
-
-        const { id, source, checkIn, checkOut } = input;
+        const { id, checkIn, checkOut } = input;
 
         // verify a logged in user is making requests
         let viewer = await authorize(db, req);
@@ -97,8 +95,85 @@ export const bookingResolvers: IResolvers = {
           throw new Error("The host either can't be found or is not connected with Stripe")
         }
 
+        const clientSecret = await Stripe.getSecret(totalPrice, host.walletId)
+
+        return { secret: clientSecret || "test failed" }
+
+        // return { secret: "stripe failed" };
+      } catch (error) {
+        throw new Error(`Failed to query Stripe`);
+      }
+        
+    },
+    createBooking: async (
+      _root: undefined,
+      { input }: CreateBookingArgs,
+      { db, req }: { db: Database, req: Request }
+    ): Promise<Booking> => {
+      try {
+
+        const { id, source, checkIn, checkOut } = input;
+
+        // verify a logged in user is making requests
+        let viewer = await authorize(db, req);
+        if (!viewer) {
+          throw new Error("Viewer cannot be found");
+        }
+
+        // find listing document that is being Booked
+        const listing = await db.listings.findOne({
+          _id: new ObjectId(id)
+        })
+        if (!listing) {
+          throw new Error("Listing can't be found");
+        }
+        if (listing.host === viewer._id) {
+          throw new Error("Viewer can't book own Listing");
+        }
+
+        // check that viewer is NOT booking their own listings
+        const today = new Date();
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+
+        if (checkInDate.getTime() > today.getTime() + 90 * 86400000) {
+          throw new Error("check in date can't be more than 90 days from today");
+        }
+
+        if (checkOutDate.getTime() > today.getTime() + 90 * 86400000) {
+          throw new Error("check out date can't be more than 90 days from today");
+        }
+
+        // check that checkOut is NOT before checkInDate
+        if (checkOutDate < checkInDate) {
+          throw new Error("Check Out date can't be before Check In date");
+        }
+
+        // create new bookingsIndex for listing being booked
+        const bookingsIndex = resolveBookingsIndex(
+          listing.bookingsIndex,
+          checkIn,
+          checkOut
+        );
+
+        // get total price to charge 
+        const totalPrice = listing.price * ((checkOutDate.getTime() - checkInDate.getTime()) / 86400000 + 1);
+
+        // get user document of host of listing
+        const host = await db.users.findOne({
+          _id: listing.host
+        });
+
+        if (!host || !host.walletId) {
+          throw new Error("The host either can't be found or is not connected with Stripe")
+        }
+
         // create Stripe charge on behalf of host 
-        await Stripe.charge(totalPrice, source, host.walletId);
+        // await Stripe.charge(totalPrice, source, host.walletId);
+        // let secret: string | null = "";
+        // const paymentIntent = await Stripe.getSecret(totalPrice, host.walletId, (clientSecret) => {
+        //   secret = clientSecret
+        // });
 
         // insert a new booking document to bookings collection
         const insertRes = await db.bookings.insertOne({
@@ -132,7 +207,6 @@ export const bookingResolvers: IResolvers = {
           }
         );
 
-        // return newly inserted booking
         return insertedBooking;
 
       } catch (error) {

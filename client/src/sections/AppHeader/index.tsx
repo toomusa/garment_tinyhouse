@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, withRouter, RouteComponentProps } from "react-router-dom";
+import { Link, useHistory, useLocation } from "react-router-dom";
 import { Layout, Input } from "antd";
 import { Viewer } from "../../lib/types";
 import { MenuItems } from "./components";
@@ -14,8 +14,7 @@ interface Props {
 const { Header } = Layout;
 const { Search } = Input;
 
-export const AppHeader = withRouter(
-  ({ viewer, setViewer, location, history }: Props & RouteComponentProps) => {
+export const AppHeader = ({ viewer, setViewer }: Props) => {
     const [search, setSearch] = useState("");
 
   const onSearch = (value: string) => {
@@ -26,6 +25,9 @@ export const AppHeader = withRouter(
       displayErrorMessage("Please enter a valid search!");
     }
   }
+
+  const history = useHistory();
+  const location = useLocation();
 
   useEffect(() => {
     const { pathname } = location;
@@ -62,4 +64,4 @@ export const AppHeader = withRouter(
       </div>
     </Header>
   );
-});
+};

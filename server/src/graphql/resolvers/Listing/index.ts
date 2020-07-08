@@ -186,7 +186,7 @@ export const listingResolvers: IResolvers = {
           _id: { $in: listing.bookings }
         });
 
-        cursor.skip(page > 0 ? (page - 1) + limit : 0);
+        cursor.skip(page > 0 ? (page - 1) * limit : 0);
         cursor = cursor.limit(limit);
 
         data.total = await cursor.count();

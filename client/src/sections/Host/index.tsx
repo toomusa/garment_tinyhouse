@@ -19,6 +19,7 @@ import {
   HostListingVariables
 } from "../../lib/graphql/mutations/HostListing/__generated__/HostListing";
 import { ListingType } from "../../lib/graphql/globalTypes";
+import { useScrollToTop } from "../../lib/hooks";
 import {
   iconColor,
   displaySuccessNotification,
@@ -52,6 +53,8 @@ export const Host = ({ viewer }: Props) => {
       );
     }
   });
+
+  useScrollToTop();
 
   const handleImageUpload = (info: UploadChangeParam) => {
     const { file } = info;
@@ -93,10 +96,24 @@ export const Host = ({ viewer }: Props) => {
   };
 
   const onFinishFailed = (errorInfo: any) => {
-    console.log(errorInfo)
     displayErrorMessage("Please complete all required form fields!");
     return;
   };
+
+  // const RadioGroup = React.forwardRef((props, ref) => (
+  //   <div ref={ref}>
+  //     <Radio.Group>
+  //       <Radio.Button value={ListingType.APARTMENT}>
+  //         <BankOutlined style={{ color: iconColor }} />
+  //         <span>Apartment</span>
+  //       </Radio.Button>
+  //       <Radio.Button value={ListingType.HOUSE}>
+  //         <HomeOutlined style={{ color: iconColor }} />
+  //         <span>House</span>
+  //       </Radio.Button>
+  //     </Radio.Group>
+  //   </div>
+  // ));
 
   if (!viewer.id || !viewer.hasWallet) {
     return (
@@ -155,6 +172,7 @@ export const Host = ({ viewer }: Props) => {
             }
           ]}
         >
+          {/* <RadioGroup /> */}
           <Radio.Group>
             <Radio.Button value={ListingType.APARTMENT}>
               <BankOutlined style={{ color: iconColor }} />

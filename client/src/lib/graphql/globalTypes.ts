@@ -17,8 +17,21 @@ export enum ListingsFilter {
   PRICE_LOW_TO_HIGH = "PRICE_LOW_TO_HIGH",
 }
 
+export interface ChargeBookingInput {
+  id: string;
+  checkIn: string;
+  checkOut: string;
+}
+
 export interface ConnectStripeInput {
   code: string;
+}
+
+export interface CreateBookingInput {
+  id: string;
+  source: string;
+  checkIn: string;
+  checkOut: string;
 }
 
 export interface HostListingInput {

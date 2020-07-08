@@ -9,6 +9,10 @@ export const typeDefs = gql`
     checkOut: String!
   }
 
+  type ChargeBooking {
+    secret: String!
+  }
+
   type Bookings {
     total: Int!
     result: [Booking!]!
@@ -91,6 +95,12 @@ export const typeDefs = gql`
     checkOut: String!
   }
 
+  input ChargeBookingInput {
+    id: ID!
+    checkIn: String!
+    checkOut: String!
+  }
+
   type Query {
     authUrl: String!
     user(id: ID!): User!
@@ -110,6 +120,7 @@ export const typeDefs = gql`
     connectStripe(input: ConnectStripeInput): Viewer!
     disconnectStripe: Viewer!
     hostListing(input: HostListingInput): Listing!
+    clientSecret(input: ChargeBookingInput): ChargeBooking!
     createBooking(input: CreateBookingInput): Booking!
   }
 `;
